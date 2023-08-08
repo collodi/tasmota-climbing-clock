@@ -87,11 +87,33 @@ Examples :
 // !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!!
 */
 
+// TODO delete
+#undef  STA_SSID1
+#define STA_SSID1 "NETGEAR66"
+#undef  STA_PASS1
+#define STA_PASS1 "purplecanoe079"
 
-#ifdef PROJECT
+// TODO change
+#undef  MQTT_HOST
+#define MQTT_HOST "192.168.0.13"
+#undef  MQTT_PORT
+#define MQTT_PORT 1883
+
+#undef NTP_SERVER1
+#define NTP_SERVER1 "pool.ntp.org"
+#undef NTP_SERVER2
+#define NTP_SERVER2 "time.nist.gov"
+#undef NTP_SERVER3
+#define NTP_SERVER3 "nl.pool.ntp.org"
+
+#undef APP_TIMEZONE
+#define APP_TIMEZONE 0
+
 #undef PROJECT
-#define PROJECT "ClimbingTimer"
-#endif
+#define PROJECT "climbingclock"
+
+#undef MQTT_FULLTOPIC
+#define MQTT_FULLTOPIC "clock/%prefix%/%topic%/"
 
 #define USE_CLIMBING_CLOCK_WS2801
 

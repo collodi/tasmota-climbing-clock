@@ -171,3 +171,11 @@ People helping to keep the show on the road:
 ## License
 
 This program is licensed under GPL-3.0-only
+
+## MQTT Command Examples
+
+```
+mosquitto_pub -t 'clock/cmnd/climbingclock_xxxxxx' -m '3600' # set clock offset to +1 hour
+mosquitto_pub -t 'clock/cmnd/climbingclock_B8A7A1/comptimer' -m '1691468100 240 30' # start, limit, transition
+mosquitto_pub -t 'clock/cmnd/climbingclock_B8A7A1/numbers' -m '1234 ffffff ffffff ffffff ffffff' # colors are BGR order
+```
