@@ -113,7 +113,15 @@ Examples :
 #define PROJECT "climbingclock"
 
 #undef MQTT_FULLTOPIC
-#define MQTT_FULLTOPIC "clock/%prefix%/%topic%/"
+#define MQTT_FULLTOPIC "%prefix%/%topic%/"
+
+#undef USE_EMULATION_HUE
+#undef USE_EMULATION_WEMO
+#undef USE_TIMERS
+#undef USE_TIMERS_WEB
+#undef USE_SUNRISE
+#undef USE_RULES
+#undef USE_TUYA_MCU
 
 #define USE_CLIMBING_CLOCK_WS2801
 

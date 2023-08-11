@@ -37,6 +37,7 @@ void display_loading(CRGB color);
 void display_clock(int offset);
 void display_timer(time_t start, time_t top, time_t transition);
 void display_numbers(char nums[4], CRGB colors[4]);
+void request_clock_offset(void);
 void display(void);
 
 CRGB leds[NUM_LEDS];
@@ -141,13 +142,23 @@ void display_numbers(char nums[4], CRGB colors[4]) {
         write_digit(i, nums[i], colors[i]);
 }
 
+void request_clock_offset(void) {
+    char topic[] = "server/cmnd/clockoffset";
+    char payload[100];
+    snprintf(payload, sizeof(payload), MQTT_TOPIC, system_get_chip_id());
+    MqttPublishPayload(topic, payload, strlen(payload), false);
+}
+
 void display(void) {
+    // TODO what if no internet, but conn.d to wifi?
     if (!clock_init) {
         display_loading(CRGB::Yellow);
         FastLED.show();
 
-        if (time(nullptr) > 1000000)
+        if (time(nullptr) > 1000000) {
+            request_clock_offset();
             clock_init = true;
+        }
 
         return;
     }
@@ -220,7 +231,7 @@ bool Xdrv100(uint32_t function) {
         case FUNC_INIT:
             climbing_timer_setup();
             break;
-        case FUNC_EVERY_100_MSECOND:
+        case FUNC_EVERY_250_MSECOND:
             display();
             break;
         case FUNC_COMMAND:
