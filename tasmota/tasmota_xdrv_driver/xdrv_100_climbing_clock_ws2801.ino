@@ -1,5 +1,4 @@
-// TODO uncomment
-//#ifdef USE_CLIMBING_CLOCK_WS2801
+#ifdef USE_CLIMBING_CLOCK_WS2801
 
 #warning **** climbing clock ws2801 is included. ****
 #define XDRV_100 100
@@ -30,14 +29,13 @@ struct display_stat {
     CRGB num_colors[4];
 };
 
-void write_segment(int i, int seg, CRGB color);
 void write_segments(int i, int segs, CRGB color);
-void write_digit(int i, int n, CRGB color);
+inline void write_digit(int i, int n, CRGB color);
+void write_two_nums(int n1, int n2, CRGB color);
 void display_loading(CRGB color);
 void display_clock(int offset);
 void display_timer(time_t start, time_t top, time_t transition);
 void display_numbers(char nums[4], CRGB colors[4]);
-void request_clock_offset(void);
 void display(void);
 
 CRGB leds[NUM_LEDS];
@@ -47,20 +45,17 @@ display_stat stat;
 int segs_to_num[] = { 119, 68, 62, 110, 77, 107, 123, 70, 127, 111 };
 bool clock_init = false;
 
+char dev_id[100];
+
 void climbing_timer_setup(void) {
+    snprintf(dev_id, sizeof(dev_id), MQTT_TOPIC, system_get_chip_id());
+
     pinMode(DATA_PIN, OUTPUT);
 	pinMode(CLK_PIN, OUTPUT);
 
 	FastLED.addLeds<WS2801, DATA_PIN, CLK_PIN, RGB>(leds, NUM_LEDS);
 	FastLED.setBrightness(255);
 	FastLED.clear();
-
-    // TODO delete
-    Serial.begin(115200);
-}
-
-void write_segment(int i, int seg, CRGB color) {
-    leds[i * 7 + seg] = color;
 }
 
 /*
@@ -70,9 +65,9 @@ void write_segment(int i, int seg, CRGB color) {
 void write_segments(int i, int segs, CRGB color) {
     for (int j = 0; j < 7; j++) {
         if (segs & (1 << j))
-            write_segment(i, j, color);
+            leds[i * 7 + j] = color;
         else
-            write_segment(i, j, CRGB::Black);
+            leds[i * 7 + j] = CRGB::Black;
     }
 }
 
@@ -80,8 +75,15 @@ void write_segments(int i, int segs, CRGB color) {
   i starts at 0 (digit index)
   n must be one of 0 - 9
 */
-void write_digit(int i, int n, CRGB color) {
+inline void write_digit(int i, int n, CRGB color) {
     write_segments(i, segs_to_num[n], color);
+}
+
+void write_two_nums(int n1, int n2, CRGB color) {
+    write_digit(0, (n1 / 10) % 10, color);
+    write_digit(1, n1 % 10, color);
+    write_digit(2, (n2 / 10) % 10, color);
+    write_digit(3, n2 % 10, color);
 }
 
 void display_loading(CRGB color) {
@@ -96,11 +98,7 @@ void display_loading(CRGB color) {
 void display_clock(int offset) {
     time_t now = time(nullptr) + offset;
     struct tm *t = localtime(&now);
-
-    write_digit(0, t->tm_hour / 10, CRGB::Green);
-    write_digit(1, t->tm_hour % 10, CRGB::Green);
-    write_digit(2, t->tm_min / 10, CRGB::Green);
-    write_digit(3, t->tm_min % 10, CRGB::Green);
+    write_two_nums(t->tm_hour, t->tm_min, CRGB::Green);
 }
 
 void display_timer(time_t start, time_t top, time_t transition) {
@@ -124,29 +122,15 @@ void display_timer(time_t start, time_t top, time_t transition) {
     int m = (rem_sec % 3600) / 60;
     int s = rem_sec % 60;
 
-    if (h > 0) {
-        write_digit(0, h / 10, color);
-        write_digit(1, h % 10, color);
-        write_digit(2, m / 10, color);
-        write_digit(3, m % 10, color);
-    } else {
-        write_digit(0, m / 10, color);
-        write_digit(1, m % 10, color);
-        write_digit(2, s / 10, color);
-        write_digit(3, s % 10, color);
-    }
+    if (h > 0)
+        write_two_nums(h, m, color);
+    else
+        write_two_nums(m, s, color);
 }
 
 void display_numbers(char nums[4], CRGB colors[4]) {
     for (int i = 0; i < 4; i++)
         write_digit(i, nums[i], colors[i]);
-}
-
-void request_clock_offset(void) {
-    char topic[] = "server/cmnd/clockoffset";
-    char payload[100];
-    snprintf(payload, sizeof(payload), MQTT_TOPIC, system_get_chip_id());
-    MqttPublishPayload(topic, payload, strlen(payload), false);
 }
 
 void display(void) {
@@ -156,7 +140,7 @@ void display(void) {
         FastLED.show();
 
         if (time(nullptr) > 1000000) {
-            request_clock_offset();
+            MqttPublishPayload("server/cmnd/clockoffset", dev_id, strlen(dev_id), false);
             clock_init = true;
         }
 
@@ -242,5 +226,4 @@ bool Xdrv100(uint32_t function) {
     return result;
 }
 
-// TODO uncomment
-//#endif
+#endif

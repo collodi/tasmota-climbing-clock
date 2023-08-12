@@ -98,6 +98,10 @@ Examples :
 #define MQTT_HOST "192.168.0.13"
 #undef  MQTT_PORT
 #define MQTT_PORT 1883
+#undef MQTT_USER
+#define MQTT_USER "ABC_MQTT"
+#undef MQTT_PASS
+#define MQTT_PASS "ABCClimbing7345"
 
 #undef NTP_SERVER1
 #define NTP_SERVER1 "pool.ntp.org"
