@@ -134,13 +134,13 @@ void display_numbers(char nums[4], CRGB colors[4]) {
 }
 
 void display(void) {
-    // TODO what if no internet, but conn.d to wifi?
     if (!clock_init) {
         display_loading(CRGB::Yellow);
         FastLED.show();
 
-        if (time(nullptr) > 1000000) {
-            MqttPublishPayload("server/cmnd/clockoffset", dev_id, strlen(dev_id), false);
+        // TODO impl. local ntp server in case no internet
+        if (MqttIsConnected()) {
+            MqttPublishPayload("server/cmnd/clockinit", dev_id, strlen(dev_id), false);
             clock_init = true;
         }
 

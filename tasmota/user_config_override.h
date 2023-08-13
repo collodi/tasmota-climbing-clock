@@ -87,17 +87,6 @@ Examples :
 // !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!!
 */
 
-// TODO delete
-#undef  STA_SSID1
-#define STA_SSID1 "NETGEAR66"
-#undef  STA_PASS1
-#define STA_PASS1 "purplecanoe079"
-
-// TODO change
-#undef  MQTT_HOST
-#define MQTT_HOST "192.168.0.13"
-#undef  MQTT_PORT
-#define MQTT_PORT 1883
 #undef MQTT_USER
 #define MQTT_USER "ABC_MQTT"
 #undef MQTT_PASS
