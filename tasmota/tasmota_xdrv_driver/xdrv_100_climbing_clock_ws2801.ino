@@ -98,7 +98,12 @@ void display_loading(CRGB color) {
 void display_clock(int offset) {
     time_t now = time(nullptr) + offset;
     struct tm *t = localtime(&now);
-    write_two_nums(t->tm_hour, t->tm_min, CRGB::Green);
+
+    int hr = t->tm_hour;
+    if (hr > 12)
+        hr -= 12;
+
+    write_two_nums(hr, t->tm_min, CRGB::Green);
 }
 
 void display_timer(time_t start, time_t top, time_t transition) {
