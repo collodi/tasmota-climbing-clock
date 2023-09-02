@@ -20,6 +20,8 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
+#include "credentials.h"
+
 /*****************************************************************************************************\
  * USAGE:
  *   To modify the stock configuration without changing the my_user_config.h file:
@@ -86,11 +88,6 @@ Examples :
 
 // !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!!
 */
-
-#undef MQTT_USER
-#define MQTT_USER "ABC_MQTT"
-#undef MQTT_PASS
-#define MQTT_PASS "ABCClimbing7345"
 
 #undef NTP_SERVER1
 #define NTP_SERVER1 "pool.ntp.org"

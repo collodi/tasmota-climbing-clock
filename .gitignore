@@ -9,6 +9,8 @@
 *.gcno
 *.gcda
 
+tasmota/credentials.h
+
 ## Project files ######
 .platformio
 .pio
