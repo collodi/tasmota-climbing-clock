@@ -113,6 +113,9 @@ Examples :
 #undef USE_RULES
 #undef USE_TUYA_MCU
 
+#define USER_TEMPLATE "{\"NAME\":\"Climbing Clock\",\"GPIO\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"FLAG\":0,\"BASE\":18}"  // [Template] Set JSON template
+#define MODULE USER_MODULE
+
 #define USE_CLIMBING_CLOCK_WS2801
 
 
