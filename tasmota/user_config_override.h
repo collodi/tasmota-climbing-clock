@@ -20,8 +20,6 @@
 #ifndef _USER_CONFIG_OVERRIDE_H_
 #define _USER_CONFIG_OVERRIDE_H_
 
-#include "credentials.h"
-
 /*****************************************************************************************************\
  * USAGE:
  *   To modify the stock configuration without changing the my_user_config.h file:
@@ -89,6 +87,8 @@ Examples :
 // !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!!
 */
 
+#include "credentials.h"
+
 #undef NTP_SERVER1
 #define NTP_SERVER1 "pool.ntp.org"
 #undef NTP_SERVER2
@@ -116,7 +116,8 @@ Examples :
 #define USER_TEMPLATE "{\"NAME\":\"Climbing Clock\",\"GPIO\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"FLAG\":0,\"BASE\":18}"  // [Template] Set JSON template
 #define MODULE USER_MODULE
 
-#define USE_CLIMBING_CLOCK_WS2801
+//#define USE_CLIMBING_CLOCK_WS2801
+#define USE_CLIMBING_CLOCK_TM1637
 
 
 #endif  // _USER_CONFIG_OVERRIDE_H_

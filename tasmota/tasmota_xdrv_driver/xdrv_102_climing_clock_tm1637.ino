@@ -1,13 +1,11 @@
-#ifdef USE_CLIMBING_CLOCK_WS2801
+#ifdef USE_CLIMBING_CLOCK_TM1637
 
-#warning **** climbing clock ws2801 is included. ****
-#define XDRV_100 100
+#warning **** climbing clock tm1637 is included. ****
+#define XDRV_102 102
 
-#include <FastLED.h>
+#include <TM1637.h>
 #include <ESP8266WiFi.h>
  
-#define NUM_LEDS 28
-
 #ifdef CLK_PIN
 #undef CLK_PIN
 #endif
@@ -16,8 +14,8 @@
 #undef DATA_PIN
 #endif
 
-#define DATA_PIN 0
-#define CLK_PIN 2
+#define CLK_PIN 0
+#define DATA_PIN 2
 
 enum display_mode {
     CLOCK,
@@ -34,26 +32,19 @@ struct display_stat {
     time_t timer_top = 0;
     time_t timer_transition = 0;
 
-    char numbers[4];
-    CRGB num_colors[4];
+    int numbers;
 };
 
-void write_segments(int i, int segs, CRGB color);
-inline void write_digit(int i, int n, CRGB color);
-void write_two_nums(int n1, int n2, CRGB color);
-void display_loading(CRGB color);
+void display_loading(void);
 void display_clock(int offset);
 void display_timer(time_t start, time_t top, time_t transition);
-void display_numbers(char nums[4], CRGB colors[4]);
+void display_numbers(char nums[4]);
 void display(void);
 
-CRGB leds[NUM_LEDS];
+TM1637 tm;
 
 display_stat stat;
-
-int segs_to_num[] = { 119, 68, 62, 110, 77, 107, 123, 70, 127, 111 };
 bool clock_init = false;
-
 char dev_id[100];
 
 void climbing_timer_setup(void) {
@@ -62,46 +53,13 @@ void climbing_timer_setup(void) {
     pinMode(DATA_PIN, OUTPUT);
 	pinMode(CLK_PIN, OUTPUT);
 
-	FastLED.addLeds<WS2801, DATA_PIN, CLK_PIN, RGB>(leds, NUM_LEDS);
-	FastLED.setBrightness(255);
-	FastLED.clear();
+    tm.begin(CLK_PIN, DATA_PIN, 4);
+    tm.setBrightness(7);
+    tm.displayClear();
 }
 
-/*
-    i = digit index (0 - 3)
-    segs = LSB -> 0th segment
-*/
-void write_segments(int i, int segs, CRGB color) {
-    for (int j = 0; j < 7; j++) {
-        if (segs & (1 << j))
-            leds[i * 7 + j] = color;
-        else
-            leds[i * 7 + j] = CRGB::Black;
-    }
-}
-
-/*
-  i starts at 0 (digit index)
-  n must be one of 0 - 9
-*/
-inline void write_digit(int i, int n, CRGB color) {
-    write_segments(i, segs_to_num[n], color);
-}
-
-void write_two_nums(int n1, int n2, CRGB color) {
-    write_digit(0, (n1 / 10) % 10, color);
-    write_digit(1, n1 % 10, color);
-    write_digit(2, (n2 / 10) % 10, color);
-    write_digit(3, n2 % 10, color);
-}
-
-void display_loading(CRGB color) {
-    fill_solid(leds, NUM_LEDS, CRGB::Black);
-
-    leds[3] = color;
-    leds[10] = color;
-    leds[17] = color;
-    leds[24] = color;
+void display_loading(void) {
+    tm.displayPChar("----");
 }
 
 void display_clock(int offset) {
@@ -112,24 +70,20 @@ void display_clock(int offset) {
     if (hr > 12)
         hr -= 12;
 
-    write_two_nums(hr, t->tm_min, CRGB::Green);
+    tm.displayTime(hr, t->tm_min, false);
 }
 
 void display_timer(time_t start, time_t top, time_t transition) {
     int set = top + transition;
 	int elapsed = time(nullptr) - start;
 
-    CRGB color = CRGB::Red;
 	int rem_sec = set - (elapsed % set);
     bool in_transition = rem_sec <= transition;
 
     if (elapsed < 0) {
-        color = CRGB::Yellow;
         rem_sec = -elapsed;
     } else if (!in_transition) {
         rem_sec -= transition;
-    } else {
-        color = CRGB::Green;
     }
 
     int h = rem_sec / 3600;
@@ -137,20 +91,18 @@ void display_timer(time_t start, time_t top, time_t transition) {
     int s = rem_sec % 60;
 
     if (h > 0)
-        write_two_nums(h, m, color);
+        tm.displayTwoInt(h, m, false);
     else
-        write_two_nums(m, s, color);
+        tm.displayTwoInt(m, s, false);
 }
 
-void display_numbers(char nums[4], CRGB colors[4]) {
-    for (int i = 0; i < 4; i++)
-        write_digit(i, nums[i], colors[i]);
+void display_numbers(int num) {
+    tm.displayInt(num);
 }
 
 void display(void) {
     if (!clock_init) {
-        display_loading(CRGB::Yellow);
-        FastLED.show();
+        display_loading();
 
         // TODO impl. local ntp server in case no internet
         if (MqttIsConnected()) {
@@ -169,11 +121,9 @@ void display(void) {
         display_timer(stat.timer_start, stat.timer_top, stat.timer_transition);
         break;
     case NUMBERS:
-        display_numbers(stat.numbers, stat.num_colors);
+        display_numbers(stat.numbers);
         break;
     }
-
-	FastLED.show();
 }
 
 void cmd_clock(void) {
@@ -200,16 +150,7 @@ void cmd_numbers(void) {
     char *end;
 
     int n = (int) strtol(XdrvMailbox.data, &end, 10);
-    stat.numbers[0] = (n / 1000) % 10;
-    stat.numbers[1] = (n / 100) % 10;
-    stat.numbers[2] = (n / 10) % 10;
-    stat.numbers[3] = n % 10;
-
-    uint32_t c;
-    for (int i = 0; i < 4; i++) {
-        c = (uint32_t) strtol(end, &end, 16);
-        memcpy(&(stat.num_colors[i]), &c, 3);
-    }
+    stat.numbers = n % 10000;
 
     ResponseCmndDone();
 }
@@ -222,7 +163,7 @@ const char clk_commands[] PROGMEM = "|"  // No Prefix
 void (* const clk_command[])(void) PROGMEM = {
   &cmd_clock, &cmd_timer, &cmd_numbers };
 
-bool Xdrv100(uint32_t function) {
+bool Xdrv102(uint32_t function) {
     bool result = false;
 
     switch (function) {
